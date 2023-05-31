@@ -1,8 +1,7 @@
 # humidity-sensor
 a fucking oldscool humidity sensor on atmega328
 
-![image](https://github.com/gen1nya/humidity-sensor/assets/23115401/96571685-97e6-40d9-b84a-370c4d1a9f3c)
-
+![image](https://github.com/gen1nya/humidity-sensor/assets/23115401/ee072434-2cd7-4858-a2c6-03f09fc94858)
 
 ### libs
 
