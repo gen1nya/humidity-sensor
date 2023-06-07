@@ -3,6 +3,7 @@
 #include <Wire.h>
 #include <DS18B20.h>
 
+#define RESULT_DELAY 10000
 #define CYCLE_DELAY 1000
 #define WARMUP_DELAY 1000
 #define DEW_POINT_TRIGGER_VALUE 128
@@ -40,7 +41,7 @@ float dry_temp;
 float wet_temp;
 
 void setup () {
-  lcd.begin(20, 4);
+  lcd.begin(16, 2);
   lcd.noAutoscroll();
   lcd.setCursor(0, 0);
   lcd.println("init");  
@@ -74,42 +75,45 @@ void loop () {
   lcd.setCursor(0, 0);
   lcd.print("dew point!");
 
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.println("cooldown peltier...");
   
   digitalWrite(PIN_PELTIER, LOW);
 
   wet_temp = ds_wet.getTempC();
   dry_temp = ds_dry.getTempC();
-
-  lcd.setCursor(0, 1);
-  lcd.print("Tdry: ");
-  lcd.print(dry_temp);
-  lcd.setCursor(0, 2);
-  lcd.print("Twet: ");
-  lcd.print(wet_temp);
-  lcd.setCursor(0, 3);
-  
+  float pTemp = ds_peltier.getTempC();
   relativeHumidity = calculateRelativeHumidity(dry_temp, wet_temp);
 
-  lcd.print("Hrel: ");
-  lcd.println(relativeHumidity);
-
-  float pTemp = ds_peltier.getTempC();
   
+  lcd.clear();
+  lcd.setCursor(0, 1);
+  lcd.print("Tw:");
+  lcd.print(wet_temp);
+  lcd.print(" Td:");
+  lcd.print(dry_temp);
+  lcd.setCursor(0, 0);
+  lcd.print("tp:");
+  lcd.print(pTemp);
+  lcd.print(" rH:");
+  lcd.print(relativeHumidity);
+  
+  
+
+  delay(RESULT_DELAY);
+
   while (pTemp > PELTIER_COOLDOWN_TEMPERATURE) {
-      _delay_ms(5000);
+      lcd.setCursor(0, 0);
+      lcd.print("tp:");
+      lcd.print(pTemp);
+      lcd.print(" rH:");
+      lcd.print(relativeHumidity);
       pTemp = ds_peltier.getTempC();
+      _delay_ms(5000);
   };
   
   _delay_ms(CYCLE_DELAY);
 }
 
 /* Слава богу у нас есть нейросети! */
-float calculateRelativeHumidity(float dryTemperature, float wetTemperature) {
-    float vaporPressure = 6.11 * pow(10, (7.5 * wetTemperature / (237.7 + wetTemperature)));
-    float saturationVaporPressure = 6.11 * pow(10, (7.5 * dryTemperature / (237.7 + dryTemperature)));
-    float relativeHumidity = (vaporPressure / saturationVaporPressure) * 100;
-    return relativeHumidity;
-}
+float calculateRelativeHumidity(float t0, float tp) {
+    return 6.112*exp((17.67*tp)/(243.5+tp))/(6.112*exp((17.67*t0)/(243.5+t0)))*100;  
+} 
